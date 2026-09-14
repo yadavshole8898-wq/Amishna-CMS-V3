@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amishna Music CMS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600;1,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+
+
+<style>
+/* ================================================================
+   CUE SHEET BUILDER — REDESIGN (scoped to #builderApp)
+   Premium enterprise SaaS layer sitting on top of the existing
+   business logic. Brand tokens reuse --teal (burgundy) / --amber (gold).
+   ================================================================ */
+#builderApp{ --b2-bg:#FAF6EE; --b2-card:#ffffff; --b2-border:#E9E1D5; --b2-border-soft:#F0E9DC;
+  --b2-ink:#241614; --b2-ink-2:#4B3B36; --b2-ink-soft:#847367; --b2-ink-faint:#B4A797;
+  --b2-green:#166A45; --b2-green-tint:#E7F3EC; --b2-amber-tint:#FBF3E1; --b2-amber-ink:#8C6720;
+  --b2-red:#9C2B1F; --b2-red-tint:#FBEAE7; --b2-burg-tint:#F7EBED; --b2-burg-tint-2:#F1DEE1;
+  background:var(--b2-bg); min-height:100vh; font-size:13.5px;
+}
+#builderApp main{max-width:1920px; margin:0 auto; padding:22px 28px 60px; display:block;}
+#builderApp .foot{max-width:1920px; margin:0 auto; padding:0 28px 30px; text-align:center; color:var(--b2-ink-faint); font-size:11px;}
+
+/* ---- Top bar ---- */
+#builderApp .topbar2{position:sticky; top:0; z-index:200; background:rgba(250,246,238,.94); backdrop-filter:saturate(140%) blur(10px);
+  border-bottom:1px solid var(--b2-border); padding:0 28px;}
+#builderApp .topbar2-in{max-width:1920px; margin:0 auto; height:60px; display:flex; align-items:center; gap:18px;}
+#builderApp .b2-brand{display:flex; align-items:center; gap:8px; flex-shrink:0;}
+#builderApp .b2-brand .sq{width:20px; height:20px; border-radius:6px; background:linear-gradient(155deg,var(--teal),#3d0a12); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+#builderApp .b2-brand .sq svg{width:11px; height:11px;}
+#builderApp .b2-brand span{font-family:var(--serif); font-weight:700; font-size:15px;}
+#builderApp .b2-crumbs{display:flex; align-items:center; gap:7px; font-size:12.3px; color:var(--b2-ink-soft); white-space:nowrap; flex-shrink:0;}
+#builderApp .b2-crumbs a{color:var(--b2-ink-soft); text-decoration:none; cursor:pointer; background:none; border:none; font:inherit; padding:0;}
+#builderApp .b2-crumbs a:hover{color:var(--teal-2); text-decoration:underline;}
+#builderApp .b2-crumbs b{color:var(--b2-ink); font-weight:600;}
+#builderApp .b2-crumbs .sep{color:var(--b2-ink-faint); font-size:11px;}
+
+#builderApp .b2-search{flex:1; max-width:340px; position:relative;}
+#builderApp .b2-search input{width:100%; height:36px; border-radius:999px; border:1px solid var(--b2-border); background:var(--b2-card);
+  padding:0 14px 0 34px; font-size:12.6px; color:var(--b2-ink); outline:none; transition:border-color .15s, box-shadow .15s;}
+#builderApp .b2-search input:focus{border-color:var(--teal); box-shadow:0 0 0 3px var(--b2-burg-tint);}
+#builderApp .b2-search svg{position:absolute; left:12px; top:50%; transform:translateY(-50%); width:16px; height:16px; stroke-width:2; color:var(--b2-ink-faint); pointer-events:none;}
+
+#builderApp .b2-navright{display:flex; align-items:center; gap:9px; margin-left:auto; flex-shrink:0;}
+#builderApp .b2-autosave{display:flex; align-items:center; gap:7px; font-size:11.8px; color:var(--b2-ink-soft); white-space:nowrap;}
+#builderApp .b2-autosave .dot{width:7px; height:7px; border-radius:50%; background:var(--b2-green); position:relative; flex-shrink:0;}
+#builderApp .b2-autosave.saving .dot{background:var(--amber);}
+#builderApp .b2-autosave .dot::after{content:''; position:absolute; inset:-4px; border-radius:50%; border:1px solid currentColor; opacity:.45; animation:b2pulse 2.2s ease-out infinite;}
+@keyframes b2pulse{0%{transform:scale(.6);opacity:.55;}100%{transform:scale(1.9);opacity:0;}}
+
+#builderApp .b2-btn{height:36px; border-radius:999px; font-size:12.6px; font-weight:600; border:1px solid transparent;
+  padding:0 15px; display:inline-flex; align-items:center; gap:8px; white-space:nowrap; transition:all .15s ease; font-family:inherit; cursor:pointer;}
+#builderApp .b2-btn svg{width:16px; height:16px; stroke-width:2; flex-shrink:0;}
+#builderApp .b2-btn-ghost{background:transparent; border-color:var(--b2-border); color:var(--b2-ink-2);}
+#builderApp .b2-btn-ghost:hover{background:var(--b2-card); border-color:var(--b2-ink-faint);}
+#builderApp .b2-btn-primary{background:var(--teal); color:#fff; box-shadow:0 1px 2px rgba(122,21,38,.25), 0 6px 16px -6px rgba(122,21,38,.55);}
+#builderApp .b2-btn-primary:hover{background:var(--teal-2);}
+#builderApp .b2-avatar{width:36px; height:36px; border-radius:50%; background:linear-gradient(155deg,var(--amber),#8C6720);
+  color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12.5px; flex-shrink:0;
+  border:2px solid var(--b2-card); box-shadow:0 1px 2px rgba(36,22,20,.15); cursor:pointer;}
+
+/* ---- Production summary card ---- */
+#builderApp .prod-summary-card{background:var(--b2-card); border:1px solid var(--b2-border); border-radius:14px;
+  box-shadow:0 1px 2px rgba(36,22,20,.04), 0 1px 6px rgba(36,22,20,.05); padding:16px 22px; display:flex; align-items:center; gap:24px;
+  min-height:112px; margin-bottom:22px; flex-wrap:wrap;}
+#builderApp .prod-poster-mini{width:64px; height:76px; border-radius:9px; flex-shrink:0; position:relative; overflow:hidden;
+  background:linear-gradient(155deg,var(--teal) 0%, #4a0e18 100%); display:flex; align-items:center; justify-content:center;
+  font-family:var(--serif); color:#fff; font-weight:700; font-size:16px; box-shadow:0 6px 16px -6px rgba(122,21,38,.5);}
+#builderApp .prod-poster-mini::before{content:''; position:absolute; inset:0;
+  background:radial-gradient(90px 60px at 100% 0%, rgba(182,134,42,.5), transparent 60%);}
+#builderApp .prod-id-mini{min-width:200px; flex-shrink:0;}
+#builderApp .prod-id-mini .eyebrow{font-size:10.3px; letter-spacing:.1em; text-transform:uppercase; color:var(--amber-ink); font-weight:700; margin-bottom:3px;}
+#builderApp .prod-id-mini h2{font-family:var(--serif); font-size:21px; font-weight:700; margin:0 0 6px; color:var(--b2-ink); line-height:1.15;}
+#builderApp .prod-id-mini .tags{display:flex; gap:6px; flex-wrap:wrap;}
+#builderApp .chip{font-size:10.6px; font-weight:600; padding:3px 9px; border-radius:999px; background:var(--b2-burg-tint); color:var(--teal-2); border:1px solid #EFD6DA;}
+#builderApp .chip.gold{background:var(--b2-amber-tint); color:var(--amber-ink); border-color:#EAD6A6;}
+#builderApp .prod-divider{width:1px; align-self:stretch; background:var(--b2-border-soft); flex-shrink:0;}
+#builderApp .prod-meta-mini{flex:1; display:grid; grid-template-columns:repeat(6,1fr); gap:0 20px; align-items:center; min-width:280px;}
+#builderApp .prod-meta-mini .m{min-width:0;}
+#builderApp .prod-meta-mini .m .l{font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--b2-ink-faint); font-weight:700; margin-bottom:4px;}
+#builderApp .prod-meta-mini .m .v{font-size:13px; font-weight:600; color:var(--b2-ink-2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+
+/* ---- Production details modal ---- */
+#builderApp .prod-modal-card{width:min(920px,92vw); max-height:86vh; display:flex; flex-direction:column; padding:0; overflow:hidden;}
+#builderApp .modal-card-head{display:flex; align-items:center; justify-content:space-between; padding:20px 26px; border-bottom:1px solid var(--b2-border-soft); flex-shrink:0;}
+#builderApp .modal-card-head h2{margin:0; font-family:var(--serif); font-size:20px; font-weight:800; color:var(--b2-ink);}
+#builderApp .modal-card-body{padding:22px 26px 28px; overflow-y:auto;}
+
+/* ---- Workspace grid ---- */
+#builderApp .workspace{display:grid; grid-template-columns:290px minmax(0,1fr) 10px var(--ep-right-w,380px); gap:20px; align-items:start;}
+#builderApp .ep-resizer{cursor:col-resize; align-self:stretch; width:10px; position:relative; margin:0 -5px; z-index:5;}
+#builderApp .ep-resizer::after{content:''; position:absolute; top:4px; bottom:4px; left:4px; width:2px; border-radius:2px; background:var(--line-strong); transition:background .15s ease;}
+#builderApp .ep-resizer:hover::after,#builderApp .ep-resizer.dragging::after{background:var(--teal-2);}
+body.ep-resizing{cursor:col-resize !important; user-select:none !important;}
+body.ep-resizing *{cursor:col-resize !important; user-select:none !important;}
+#builderApp .panel2{background:var(--b2-card); border:1px solid var(--b2-border); border-radius:14px; box-shadow:0 1px 2px rgba(36,22,20,.04), 0 1px 6px rgba(36,22,20,.05);}
+#builderApp .panel2-head{padding:15px 18px 13px; border-bottom:1px solid var(--b2-border-soft); display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+#builderApp .panel2-head h3{font-size:12.3px; font-weight:700; margin:0; text-transform:uppercase; letter-spacing:.05em; color:var(--b2-ink-soft);}
+#builderApp .panel2-body{padding:16px 18px;}
+
+/* ---- Left: episode sidebar ---- */
+#builderApp .ep-sidebar{position:sticky; top:82px; max-height:calc(100vh - 100px); display:flex; flex-direction:column;}
+#builderApp .ep-search-wrap{padding:14px 14px 10px; position:relative;}
+#builderApp .ep-search-wrap svg{position:absolute; left:26px; top:24px; width:16px; height:16px; stroke-width:2; color:var(--b2-ink-faint); pointer-events:none;}
+#builderApp .ep-search-wrap input{width:100%; height:36px; border:1px solid var(--b2-border); background:var(--b2-bg); border-radius:10px;
+  padding:0 12px 0 32px; font-size:12.4px; outline:none; transition:border-color .15s;}
+#builderApp .ep-search-wrap input:focus{border-color:var(--teal); background:#fff;}
+#builderApp .ep-add-row{margin:0 14px 10px; display:flex; gap:8px;}
+#builderApp .ep-add-row button{height:33px; border-radius:10px; font-size:12px; font-weight:600; font-family:inherit; cursor:pointer; border:none;}
+#builderApp .ep-add-row .btn-add-episode{flex:1; background:var(--teal); color:#fff;}
+#builderApp .ep-add-row .btn-add-episode:hover{background:var(--teal-2);}
+#builderApp .ep-add-row .btn-import-episode{width:36px; height:36px; flex:none; background:var(--b2-bg); border:1px solid var(--b2-border); color:var(--b2-ink-2); display:inline-flex; align-items:center; justify-content:center;}
+#builderApp .ep-add-row .btn-import-episode svg{width:16px; height:16px; stroke-width:2; flex-shrink:0;}
+#builderApp .ep-add-row .btn-import-episode:hover{border-color:var(--b2-ink-faint);}
+#builderApp .ep-count-row{padding:0 14px 8px; font-size:11px; color:var(--b2-ink-faint);}
+#builderApp .ep-list-scroll{overflow-y:auto; padding:0 10px 14px; flex:1;}
+#builderApp .ep-row{display:flex; align-items:center; gap:10px; padding:10px; border-radius:10px; cursor:pointer;
+  border-left:3px solid transparent; margin-bottom:2px; transition:background .12s;}
+#builderApp .ep-row:hover{background:var(--b2-bg);}
+#builderApp .ep-row.active{background:var(--b2-burg-tint); border-left:3px solid var(--teal);}
+#builderApp .ep-row-no{width:30px; height:30px; border-radius:8px; background:var(--b2-bg); border:1px solid var(--b2-border-soft);
+  display:flex; align-items:center; justify-content:center; font-size:11.3px; font-weight:700; color:var(--b2-ink-2); flex-shrink:0;}
+#builderApp .ep-row.active .ep-row-no{background:var(--teal); color:#fff; border-color:var(--teal);}
+#builderApp .ep-row-mid{flex:1; min-width:0;}
+#builderApp .ep-row-title{font-size:12.5px; font-weight:600; color:var(--b2-ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+#builderApp .ep-row-sub{font-size:10.8px; color:var(--b2-ink-faint); margin-top:2px; display:flex; align-items:center;}
+#builderApp .ep-row-del{width:24px; height:24px; border-radius:7px; border:none; background:transparent; color:var(--b2-ink-faint); flex-shrink:0; opacity:0; transition:opacity .12s, background .12s; font-family:inherit; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;}
+#builderApp .ep-row-del svg{width:14px; height:14px; stroke-width:2; flex-shrink:0;}
+#builderApp .ep-row:hover .ep-row-del{opacity:1;}
+#builderApp .ep-row-del:hover{background:var(--b2-red-tint); color:var(--b2-red);}
+#builderApp .status-dot{width:6px; height:6px; border-radius:50%; display:inline-block; margin-right:5px; flex-shrink:0;}
+#builderApp .st-draft{background:#BFB3A2;} #builderApp .st-progress{background:var(--amber);} #builderApp .st-locked{background:var(--b2-green);}
+
+/* ---- Center column ---- */
+#builderApp .ep-center{display:flex; flex-direction:column; gap:20px; min-width:0;}
+#builderApp .ep-detail-fields{display:grid; grid-template-columns:repeat(5,1fr); gap:14px;}
+#builderApp .ep-dl-actions{display:flex; gap:6px; flex-wrap:wrap;}
+#builderApp .b2-btn-ghost-sm{height:28px; padding:0 11px; border-radius:999px; font-size:11.3px; font-weight:600; border:1px solid var(--b2-border); background:var(--b2-bg); color:var(--b2-ink-2); font-family:inherit; cursor:pointer;}
+#builderApp .b2-btn-ghost-sm:hover{border-color:var(--teal); color:var(--teal-2);}
+#builderApp .btn-primary-sm{height:32px; padding:0 14px; border-radius:999px; font-size:12px; font-weight:700; border:none; background:var(--teal); color:#fff; font-family:inherit; cursor:pointer; display:inline-flex; align-items:center; gap:8px;}
+#builderApp .btn-primary-sm:hover{background:var(--teal-2);}
+
+#builderApp .tbl-scroll{overflow-x:auto;}
+#builderApp table.tracks-tbl{width:100%; border-collapse:collapse; font-size:12.6px;}
+#builderApp table.tracks-tbl thead th{position:sticky; top:0; background:var(--b2-card); text-align:left; font-size:10.4px; text-transform:uppercase;
+  letter-spacing:.05em; color:var(--b2-ink-faint); font-weight:700; padding:10px 14px; border-bottom:1px solid var(--b2-border); white-space:nowrap; z-index:2;}
+#builderApp table.tracks-tbl tbody td{padding:11px 14px; border-bottom:1px solid var(--b2-border-soft); vertical-align:middle;}
+#builderApp tr.track-row-tbl{cursor:pointer; transition:background .12s;}
+#builderApp tr.track-row-tbl:hover{background:var(--b2-bg);}
+#builderApp tr.track-row-tbl.active{background:var(--b2-burg-tint);}
+#builderApp tr.track-row-tbl.active td:first-child{box-shadow:inset 3px 0 0 var(--teal);}
+#builderApp .tk-no{color:var(--b2-ink-faint); font-weight:600; font-variant-numeric:tabular-nums;}
+#builderApp .tk-name{font-weight:600; color:var(--b2-ink);}
+#builderApp .tk-dur{font-variant-numeric:tabular-nums; color:var(--b2-ink-2);}
+#builderApp .badge2{font-size:10.6px; font-weight:700; padding:4px 10px; border-radius:999px; display:inline-block; white-space:nowrap;}
+#builderApp .b-draft{background:#F2EEE7; color:#7A6E5F;}
+#builderApp .b-progress{background:var(--b2-amber-tint); color:var(--amber-ink);}
+#builderApp .b-locked{background:var(--b2-green-tint); color:var(--b2-green);}
+#builderApp .row-actions{display:flex; gap:4px; opacity:0; transition:opacity .12s; justify-content:flex-end;}
+#builderApp tr:hover .row-actions, #builderApp tr.active .row-actions{opacity:1;}
+#builderApp .icon-btn2{width:32px; height:32px; border-radius:8px; border:1px solid transparent; background:transparent;
+  display:inline-flex; align-items:center; justify-content:center; color:var(--b2-ink-faint); transition:all .12s; font-family:inherit; cursor:pointer;}
+#builderApp .icon-btn2 svg{width:16px; height:16px; stroke-width:2; flex-shrink:0;}
+#builderApp .icon-btn2:hover{background:var(--b2-card); border-color:var(--b2-border); color:var(--teal-2);}
+
+/* ---- Right column ---- */
+#builderApp .ep-right{position:sticky; top:82px; display:flex; flex-direction:column; gap:20px; max-height:calc(100vh - 100px); overflow-y:auto; padding-bottom:4px;}
+#builderApp .track-detail-fields{display:grid; grid-template-columns:1fr 1fr; gap:12px 14px;}
+#builderApp .mini-subhead{font-size:10.4px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--amber-ink); margin:6px 0 -2px;}
+#builderApp .share-badge{font-size:10.8px; font-weight:800; padding:5px 11px; border-radius:999px; background:var(--b2-green-tint); color:var(--b2-green); white-space:nowrap;}
+#builderApp .share-badge.warn{background:var(--b2-red-tint); color:var(--b2-red);}
+#builderApp .contrib-tbl{display:flex; flex-direction:column; padding:2px 12px 4px;}
+#builderApp .contrib-row{display:grid; grid-template-columns:1fr .95fr .8fr .62fr 1fr 28px; gap:7px; align-items:center; padding:8px 0; border-bottom:1px solid var(--b2-border-soft);}
+#builderApp .contrib-head{font-size:9.6px; text-transform:uppercase; letter-spacing:.05em; color:var(--b2-ink-faint); font-weight:700; padding-bottom:8px; border-bottom:1px solid var(--b2-border);}
+#builderApp .contrib-row select, #builderApp .contrib-row input{height:31px; border:1px solid var(--b2-border); border-radius:8px; background:var(--b2-bg); padding:0 7px; font-size:11.6px; width:100%; outline:none; font-family:inherit;}
+#builderApp .contrib-row select:focus, #builderApp .contrib-row input:focus{border-color:var(--teal); background:#fff;}
+#builderApp .btn-add-contrib{margin:10px 12px 14px; width:calc(100% - 24px); height:42px; border-radius:11px; border:1.5px dashed #DCC79C;
+  background:var(--b2-amber-tint); color:var(--amber-ink); font-size:12.8px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px;
+  transition:all .15s; font-family:inherit; cursor:pointer;}
+#builderApp .btn-add-contrib:hover{background:#F5E5C0; border-color:var(--amber);}
+#builderApp .save-song-wrap{padding:2px 12px 14px;}
+#builderApp .save-song-wrap .save-song-db-btn{width:100%;}
+
+#builderApp .empty-note2{padding:22px 6px; color:var(--b2-ink-faint); font-size:12.4px; text-align:center;}
+
+/* ---- Export card (bulk range export) ---- */
+#builderApp #exportSection{margin-top:22px;}
+
+/* ---- Preview modal ---- */
+#builderApp .preview-modal-card{width:min(760px,92vw); max-height:86vh; display:flex; flex-direction:column; padding:0;}
+#builderApp .preview-body{overflow-y:auto; padding:26px 30px 30px;}
+#builderApp .preview-body h1{font-family:var(--serif); font-size:24px; margin:0 0 4px;}
+#builderApp .preview-body .pv-sub{color:var(--b2-ink-soft); font-size:12.5px; margin:0 0 20px;}
+#builderApp .preview-body table{width:100%; border-collapse:collapse; font-size:12.5px; margin-bottom:18px;}
+#builderApp .preview-body th{text-align:left; font-size:10.5px; text-transform:uppercase; color:var(--b2-ink-faint); border-bottom:1px solid var(--b2-border); padding:8px 10px;}
+#builderApp .preview-body td{padding:8px 10px; border-bottom:1px solid var(--b2-border-soft);}
+#builderApp .preview-body .pv-meta{display:grid; grid-template-columns:repeat(3,1fr); gap:10px 20px; margin-bottom:22px;}
+#builderApp .preview-body .pv-meta .l{font-size:10.2px; text-transform:uppercase; color:var(--b2-ink-faint); font-weight:700; margin-bottom:2px;}
+#builderApp .preview-body .pv-meta .v{font-size:13px; font-weight:600; color:var(--b2-ink-2);}
+
+@media (max-width:1400px){
+  #builderApp .workspace{grid-template-columns:250px minmax(0,1fr) 10px var(--ep-right-w,340px);}
+  #builderApp .prod-meta-mini{grid-template-columns:repeat(3,1fr); row-gap:10px;}
+}
+@media (max-width:1080px){
+  #builderApp .workspace{grid-template-columns:1fr;}
+  #builderApp .ep-sidebar, #builderApp .ep-right{position:static; max-height:none;}
+  #builderApp .ep-detail-fields{grid-template-columns:repeat(2,1fr);}
+  #builderApp .ep-resizer{display:none;}
+}
+</style>
+
+<style>
+#loginOverlay{position:fixed;inset:0;
+  background:radial-gradient(900px 480px at 15% -10%, rgba(207,165,63,.16), transparent 55%), linear-gradient(160deg,#3a0d16,#5c1420 55%,#3a0d16);
+  display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;}
+.login-card{background:#fff;padding:40px 36px;border-radius:16px;width:380px;max-width:100%;
+  box-shadow:0 20px 60px rgba(0,0,0,.4);border-top:3px solid var(--amber);}
+.login-card .lc-brand{font-family:var(--serif);font-weight:800;font-size:24px;color:var(--teal);margin:0 0 2px;}
+.login-card .lc-sub{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 26px;}
+.login-card label.lc-lab{font-size:12px;font-weight:600;color:var(--ink-soft);display:block;margin:14px 0 6px;}
+.login-card input{width:100%;padding:11px 12px;font-family:inherit;font-size:13.5px;border:1px solid var(--line-strong);
+  border-radius:9px;background:var(--field);color:var(--ink);}
+.login-card input:focus{outline:none;border-color:var(--teal-2);box-shadow:0 0 0 3px rgba(122,21,38,.12);}
+.login-card .lc-remember{display:flex;align-items:center;gap:7px;margin:14px 0 4px;font-size:12.5px;color:var(--ink-soft);}
+.login-card .lc-remember input{width:auto;}
+.login-card button.lc-submit{width:100%;padding:12px;margin-top:16px;background:linear-gradient(180deg,var(--teal-2),var(--teal));
+  color:#fff;font-weight:700;font-size:14px;border-radius:999px;box-shadow:0 6px 16px rgba(122,21,38,.25);}
+.login-card button.lc-submit:hover{filter:brightness(1.07);}
+.login-card .lc-demo{font-size:11.5px;color:var(--ink-soft);text-align:center;margin:16px 0 0;}
+/* Role tabs on the login card */
+.lc-tabs{display:flex;gap:6px;background:#f3ede6;border-radius:999px;padding:4px;margin-top:4px;}
+.lc-tab{flex:1;padding:9px 10px;border-radius:999px;background:transparent;color:var(--ink-soft);font-size:12.5px;font-weight:700;border:none;}
+.lc-tab.active{background:#fff;color:var(--teal);box-shadow:0 2px 6px rgba(0,0,0,.08);}
+.lc-error{background:rgba(178,59,46,.08);border:1px solid rgba(178,59,46,.3);color:var(--warn);
+  font-size:12px;font-weight:600;padding:9px 11px;border-radius:8px;margin-top:14px;}
+</style>
+</head>
+<body>
+
+<div id="loginOverlay">
+<div class="login-card">
+<div class="lc-brand">Amishna Music CMS</div>
+<p class="lc-sub">Cue Management System</p>
+
+<!-- Role switch: Admin vs Editor login -->
+<div class="lc-tabs">
+  <button type="button" class="lc-tab active" id="tabAdminBtn" onclick="setLoginRole('admin')">Admin</button>
+  <button type="button" class="lc-tab" id="tabEditorBtn" onclick="setLoginRole('editor')">Editor</button>
+</div>
+
+<label class="lc-lab">Email</label>
+<input id="loginEmail" placeholder="you@amishna.com" onkeydown="if(event.key==='Enter')loginApp()">
+<label class="lc-lab">Password</label>
+<input id="loginPassword" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')loginApp()">
+<div class="lc-error" id="loginError" style="display:none;"></div>
+<button class="lc-submit" onclick="loginApp()">Sign in</button>
+<p class="lc-demo" id="loginDemoHint">Demo admin: admin@amishna.com / admin123</p>
+</div></div>
+
+<style>
+  /* ============================================================
+     ENTERPRISE DASHBOARD — top nav
+     ============================================================ */
+  .dash-bar{background:linear-gradient(180deg,#8a1a2c,var(--teal));
+    color:#fbeee9;border-bottom:3px solid var(--amber);box-shadow:0 4px 16px rgba(42,20,20,.18);}
+  .dash-bar .bar-in{padding:14px 28px;max-width:1440px;}
+  .brand .mark{font-size:19px;}
+  /* ---------- Dashboard top nav: icon-over-label items, evenly distributed ---------- */
+  .dash-bar .brand{margin-right:0;}
+  .nav-links{flex:1;display:flex;align-items:center;justify-content:space-around;
+    gap:6px;margin:0 8px 0 28px;min-width:0;}
+  .nav-item{display:flex;flex-direction:column;align-items:center;gap:8px;line-height:1;
+    background:transparent;border:none;color:#f7e9e6;padding:2px 6px;position:relative;}
+  .nav-item .nav-ico{position:relative;width:46px;height:46px;border-radius:13px;
+    border:1.5px solid rgba(255,255,255,.34);display:flex;align-items:center;justify-content:center;
+    transition:background .14s ease,border-color .14s ease,transform .12s ease,box-shadow .14s ease;}
+  .nav-item .nav-ico svg{width:21px;height:21px;stroke-width:2;flex-shrink:0;}
+  .nav-item .nav-lbl{font-size:13.5px;font-weight:600;letter-spacing:.005em;white-space:nowrap;}
+  .nav-item:not(:disabled){cursor:pointer;}
+  .nav-item:not(:disabled):hover .nav-ico{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.65);
+    transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.18);}
+  .nav-item.active .nav-ico{background:rgba(255,255,255,.2);border-color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.2);}
+  .nav-item:disabled{opacity:1;}
+  .nav-item .nav-ico .dot{position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;
+    background:var(--amber-2);border:2px solid var(--teal);}
+
+  /* ============================================================
+     PAGE LAYOUT
+     ============================================================ */
+  .dash-wrap{max-width:1440px;margin:0 auto;padding:28px 28px 90px;}
+  .dash-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px;}
+  .dash-head h1{font-family:var(--serif);font-size:28px;margin:0 0 4px;letter-spacing:-.01em;color:var(--teal);}
+  .dash-head p{margin:0;color:var(--ink-soft);font-size:13px;}
+  .dash-new{background:linear-gradient(135deg,var(--teal-2),var(--teal));color:#fff;padding:11px 22px;border-radius:999px;
+    font-weight:700;font-size:13.5px;white-space:nowrap;box-shadow:0 6px 16px rgba(122,21,38,.22);display:inline-flex;align-items:center;gap:7px;}
+  .dash-new:hover{filter:brightness(1.08);transform:translateY(-1px);}
+  .dash-empty{color:var(--ink-soft);font-size:13.5px;text-align:center;padding:60px 20px;font-style:italic;
+    background:#fff;border:1px dashed var(--line-strong);border-radius:var(--radius-lux);}
+
+  .dash-body{display:grid;grid-template-columns:1fr 300px;gap:22px;align-items:start;}
+  .dash-main{min-width:0;}
+  .dash-side{display:flex;flex-direction:column;gap:16px;position:sticky;top:90px;}
+
+  /* ============================================================
+     KPI CARDS
+     ============================================================ */
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:20px;}
+  .stat-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lux);padding:18px 20px;
+    box-shadow:var(--shadow-sm);transition:box-shadow .18s ease,transform .18s ease;position:relative;overflow:hidden;}
+  .stat-card:hover{box-shadow:var(--shadow);transform:translateY(-2px);}
+  .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--teal),var(--amber));opacity:0;transition:opacity .18s ease;}
+  .stat-card:hover::before{opacity:1;}
+  .stat-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+  .stat-icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,rgba(122,21,38,.09),rgba(182,134,42,.12));
+    color:var(--teal);display:flex;align-items:center;justify-content:center;flex:none;}
+  .stat-val{font-family:var(--serif);font-size:30px;font-weight:800;color:var(--teal);letter-spacing:-.01em;margin-top:10px;}
+  .stat-label{font-size:11.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-top:3px;}
+
+  /* ============================================================
+     FILTER BAR
+     ============================================================ */
+  .filter-bar{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lux);padding:16px 18px;
+    box-shadow:var(--shadow-sm);margin-bottom:20px;}
+  .filter-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
+  .filter-field{display:flex;flex-direction:column;gap:5px;min-width:140px;flex:1;}
+  .filter-field.grow{flex:2;min-width:200px;}
+  .filter-field label{font-size:10.5px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.07em;}
+  .filter-field input,.filter-field select{padding:9px 12px;font-size:12.5px;border-radius:9px;}
+  .filter-actions{display:flex;gap:8px;flex:none;}
+  .filter-actions button{padding:9px 16px;font-size:12.5px;}
+  .btn.clear{background:transparent;border:1px solid var(--line-strong);color:var(--ink-soft);font-weight:700;}
+  .btn.clear:hover{background:#f5f0e9;color:var(--ink);}
+  .btn.apply{background:linear-gradient(135deg,var(--teal-2),var(--teal));color:#fff;font-weight:700;}
+  .btn.apply:hover{filter:brightness(1.08);}
+
+  /* ============================================================
+     PROJECT TABLE
+     ============================================================ */
+  .table-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lux);box-shadow:var(--shadow-sm);overflow:hidden;}
+  .table-scroll{overflow-x:auto;}
+  table.proj-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:920px;}
+  .proj-table thead th{text-align:left;padding:13px 16px;font-size:10.5px;font-weight:800;text-transform:uppercase;
+    letter-spacing:.07em;color:var(--ink-soft);border-bottom:1px solid var(--line);background:#fbf9f5;white-space:nowrap;}
+  .proj-table tbody td{padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  .proj-table tbody tr{transition:background .14s ease;}
+  .proj-table tbody tr:hover{background:#fbf6ef;}
+  .proj-table tbody tr:last-child td{border-bottom:none;}
+  .pt-poster{width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,var(--teal-2),var(--teal));
+    color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-weight:800;font-size:14px;flex:none;}
+  .pt-name-cell{display:flex;align-items:center;gap:11px;}
+  .pt-name{font-weight:700;color:var(--ink);font-size:13px;white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis;}
+  .pt-sub{font-size:11px;color:var(--ink-soft);margin-top:1px;}
+  .pt-muted{color:var(--ink-soft);}
+  .pt-del{background:none;border:none;color:var(--ink-soft);font-size:14px;width:32px;height:32px;border-radius:8px;flex:none;display:inline-flex;align-items:center;justify-content:center;}
+  .pt-del svg{width:16px;height:16px;stroke-width:2;flex-shrink:0;}
+  .pt-del:hover{background:rgba(178,59,46,.1);color:var(--warn);}
+  .pt-open{background:transparent;border:1px solid var(--line-strong);color:var(--teal);font-weight:700;
+    padding:7px 13px;border-radius:999px;font-size:12px;white-space:nowrap;}
+  .pt-open:hover{background:var(--teal);color:#fff;border-color:var(--teal);}
+  .pt-actions{display:flex;gap:6px;align-items:center;justify-content:flex-end;}
+
+  .pt-assign{padding:5px 22px 5px 8px;font-size:12px;border-radius:7px;min-width:120px;}
+  .pt-status-select{padding:5px 20px 5px 10px;font-size:11px;font-weight:700;border-radius:999px;border:1px solid transparent;min-width:130px;}
+  .pt-status-select.st-draft{background:#eef0ee;color:#5a5f5d;}
+  .pt-status-select.st-progress{background:#fdf0d8;color:var(--amber-ink);}
+  .pt-status-select.st-ready{background:#e2ecfb;color:#1f5fd6;}
+
+  .pt-progress{display:flex;flex-direction:column;gap:5px;min-width:110px;}
+  .pt-progress-track{width:100%;height:6px;border-radius:999px;background:#eee6d9;overflow:hidden;}
+  .pt-progress-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--amber-2),var(--teal-2));
+    transition:width .5s ease;}
+  .pt-progress-text{font-size:11px;color:var(--ink-soft);font-weight:600;}
+
+  /* ---------- Pagination ---------- */
+  .pagination-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+    padding:14px 18px;border-top:1px solid var(--line);background:#fbf9f5;font-size:12px;color:var(--ink-soft);}
+  .pg-left{display:flex;align-items:center;gap:8px;}
+  .pg-left select{padding:5px 22px 5px 8px;font-size:12px;border-radius:7px;width:auto;}
+  .pg-right{display:flex;align-items:center;gap:6px;}
+  .pg-btn{background:#fff;border:1px solid var(--line-strong);color:var(--ink);width:28px;height:28px;border-radius:7px;
+    font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+  .pg-btn:hover:not(:disabled){background:var(--teal);color:#fff;border-color:var(--teal);}
+  .pg-btn:disabled{opacity:.35;cursor:default;}
+  .pg-page{font-weight:700;color:var(--ink);}
+
+  /* ============================================================
+     SIDEBAR
+     ============================================================ */
+  .side-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lux);box-shadow:var(--shadow-sm);padding:18px;}
+  .side-card h3{margin:0 0 14px;font-family:var(--serif);font-size:14.5px;font-weight:800;color:var(--teal);
+    display:flex;align-items:center;gap:8px;}
+  .side-empty{font-size:12px;color:var(--ink-soft);font-style:italic;padding:6px 0;}
+
+  .activity-item{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line);}
+  .activity-item:last-child{border-bottom:none;padding-bottom:0;}
+  .activity-item:first-child{padding-top:0;}
+  .activity-dot{width:8px;height:8px;border-radius:50%;background:var(--amber);margin-top:5px;flex:none;}
+  .activity-body{min-width:0;}
+  .activity-title{font-size:12.5px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .activity-meta{font-size:11px;color:var(--ink-soft);margin-top:1px;}
+
+  .dist-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:11.5px;}
+  .dist-label{width:78px;flex:none;color:var(--ink-soft);font-weight:600;}
+  .dist-track{flex:1;height:8px;border-radius:999px;background:#f1ebe0;overflow:hidden;}
+  .dist-fill{height:100%;border-radius:999px;}
+  .dist-val{width:22px;flex:none;text-align:right;font-weight:700;color:var(--ink);}
+
+  .quick-actions{display:flex;flex-direction:column;gap:8px;}
+  .quick-actions button{width:100%;text-align:left;padding:10px 14px;border-radius:10px;font-size:12.5px;font-weight:600;
+    background:#fbf9f5;border:1px solid var(--line);color:var(--ink);display:flex;align-items:center;gap:9px;}
+  .quick-actions button:hover{border-color:var(--teal-2);color:var(--teal-2);background:#fff;}
+
+  /* ---------- Members page ---------- */
+  .members-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+  .member-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-sm);padding:16px;
+    box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:12px;}
+  .mc-avatar{flex:none;width:40px;height:40px;border-radius:10px;background:linear-gradient(180deg,var(--amber-2),var(--amber));
+    color:#1c1206;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;}
+  .mc-info{flex:1;min-width:0;}
+  .mc-name{font-weight:700;font-size:13.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mc-email{font-size:12px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mc-count{font-size:11.5px;color:var(--amber-ink);font-weight:700;margin-top:3px;}
+  .mc-actions{display:flex;gap:6px;flex:none;}
+
+  /* ---------- Settings page ---------- */
+  .settings-block{background:#fff;border:1px solid var(--line);border-radius:var(--radius-sm);padding:22px;
+    box-shadow:var(--shadow-sm);margin-bottom:18px;}
+  .settings-block h2{margin:0 0 14px;font-family:var(--serif);font-size:17px;font-weight:800;}
+  .settings-block .field-stack{display:flex;flex-direction:column;gap:10px;max-width:340px;margin-bottom:14px;}
+
+  /* ---------- Modal (Add / edit editor) ---------- */
+  .modal-overlay{position:fixed;inset:0;background:rgba(30,12,14,.5);display:flex;align-items:center;justify-content:center;
+    z-index:9998;padding:20px;}
+  .modal-card{background:#fff;border-radius:16px;padding:28px;width:380px;max-width:100%;box-shadow:var(--shadow-lg);}
+  .modal-card h2{margin:0 0 16px;font-family:var(--serif);font-size:19px;font-weight:800;color:var(--teal);}
+  .modal-card input{margin-bottom:2px;}
+  .modal-card label.lc-lab{margin:12px 0 6px;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+
+  @media (max-width:1080px){
+    .dash-body{grid-template-columns:1fr;}
+    .dash-side{position:static;}
+  }
+  @media (max-width:640px){
+    .dash-bar .bar-in{gap:10px;}
+    .dash-bar .nav-links{flex-wrap:wrap;justify-content:center;}
+    .filter-row{flex-direction:column;align-items:stretch;}
+    .filter-field{min-width:0;}
+  }
+</style>
+
+<div id="dashboardScreen" style="display:none;">
+  <div id="dashNav"><!-- top nav injected by renderTopNav() --></div>
+  <div class="dash-wrap">
+    <div class="dash-head">
+      <div>
+        <h1 id="dashTitle">Projects</h1>
+        <p id="dashSubtitle">Pick up a serial where you left off, or start a new one.</p>
+      </div>
+      <button id="dashNewBtn" class="dash-new" onclick="startNewProject()">+ New project</button>
+    </div>
+
+    <div id="dashStats" class="stats-grid"><!-- KPI cards injected by renderDashboardStats() --></div>
+
+    <div class="filter-bar">
+      <div class="filter-row">
+        <div class="filter-field grow">
+          <label for="dashSearch">Search</label>
+          <input id="dashSearch" placeholder="Search by project name or editor…" oninput="renderDashboard()">
+        </div>
+        <div class="filter-field">
+          <label for="dashFilterStatus">Status</label>
+          <select id="dashFilterStatus" onchange="renderDashboard()"></select>
+        </div>
+        <div class="filter-field">
+          <label for="dashFilterEditor">Editor</label>
+          <select id="dashFilterEditor" onchange="renderDashboard()"></select>
+        </div>
+        <div class="filter-field">
+          <label for="dashFilterType">Project Type</label>
+          <select id="dashFilterType" onchange="renderDashboard()"></select>
+        </div>
+        <div class="filter-field">
+          <label for="dashFilterHouse">Production House</label>
+          <select id="dashFilterHouse" onchange="renderDashboard()"></select>
+        </div>
+        <div class="filter-field">
+          <label for="dashFilterChannel">Channel</label>
+          <select id="dashFilterChannel" onchange="renderDashboard()"></select>
+        </div>
+        <div class="filter-field">
+          <label for="dashFilterYear">Year</label>
+          <select id="dashFilterYear" onchange="renderDashboard()"></select>
+        </div>
+        <div class="filter-actions">
+          <button type="button" class="btn clear" onclick="clearDashFilters()">Clear</button>
+          <button type="button" class="btn apply" onclick="renderDashboard()">Apply</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-body">
+      <div class="dash-main">
+        <div id="dashFolders"></div>
+      </div>
+      <div class="dash-side">
+        <div class="side-card">
+          <h3>Recent Activity</h3>
+          <div id="dashActivity"></div>
+        </div>
+        <div class="side-card">
+          <h3>Project Distribution</h3>
+          <div id="dashDistribution"></div>
+        </div>
+        <div class="side-card">
+          <h3>Quick Actions</h3>
+          <div class="quick-actions">
+            <button type="button" onclick="startNewProject()">＋ New Project</button>
+            <button type="button" onclick="showMembers()">👥 Manage Team</button>
+            <button type="button" onclick="showSettings()">⚙ Settings</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MEMBERS PAGE (Admin only) — add / edit / remove editors,
+     see how many projects are assigned to each one
+     ============================================================ -->
+<div id="membersScreen" style="display:none;">
+  <div id="membersNav"></div>
+  <div class="dash-wrap">
+    <div class="dash-head">
+      <div>
+        <h1>Members</h1>
+        <p>Editors who can log in and work on the projects you assign them.</p>
+      </div>
+      <button class="dash-new" onclick="openEditorModal()">+ Add editor</button>
+    </div>
+    <div id="membersList"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SETTINGS PAGE (Admin only) — Add editor / change password / logout
+     ============================================================ -->
+<div id="settingsScreen" style="display:none;">
+  <div id="settingsNav"></div>
+  <div class="dash-wrap" style="max-width:640px;">
+    <div class="dash-head"><div><h1>Settings</h1><p>Account and team basics — nothing you don't need.</p></div></div>
+
+    <div class="settings-block">
+      <h2>Add Editor</h2>
+      <p class="hint" style="margin:0 0 14px;">Give a team member their own login so they can work on the projects you assign to them.</p>
+      <button class="dash-new" onclick="openEditorModal()">+ Add editor</button>
+    </div>
+
+    <div class="settings-block">
+      <h2>Change Admin Password</h2>
+      <form onsubmit="return changeAdminPassword(event)">
+        <div class="field-stack">
+          <input id="curAdminPass" type="password" placeholder="Current password" autocomplete="current-password">
+          <input id="newAdminPass" type="password" placeholder="New password" autocomplete="new-password">
+          <input id="newAdminPass2" type="password" placeholder="Confirm new password" autocomplete="new-password">
+        </div>
+        <button class="btn amber" type="submit">Update password</button>
+      </form>
+    </div>
+
+    <div class="settings-block">
+      <h2>Logout</h2>
+      <button class="btn ghost" style="background:var(--teal-2);color:#fff;" onclick="logoutApp()">Log out</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit Editor modal -->
+<div id="editorModal" class="modal-overlay" style="display:none;">
+  <div class="modal-card">
+    <h2 id="editorModalTitle">Add Editor</h2>
+    <label class="lc-lab">Full name</label>
+    <input id="editorNameInput" placeholder="e.g. Priya Nair">
+    <label class="lc-lab">Email</label>
+    <input id="editorEmailInput" placeholder="editor@amishna.com">
+    <label class="lc-lab">Password</label>
+    <input id="editorPasswordInput" type="password" placeholder="Set a password">
+    <div class="modal-actions">
+      <button class="btn ghost" style="background:#eee;color:var(--ink);" type="button" onclick="closeEditorModal()">Cancel</button>
+      <button class="btn amber" type="button" onclick="submitEditorModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="builderApp" style="display:none;">
+<div class="topbar2">
+  <div class="topbar2-in">
+    <div class="b2-brand">
+      <div class="sq"><svg viewBox="0 0 24 24" fill="none"><path d="M9 18V5l12-2v13" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="18" r="3" stroke="#fff" stroke-width="2"/><circle cx="18" cy="16" r="3" stroke="#fff" stroke-width="2"/></svg></div>
+      <span>Amishna</span>
+    </div>
+    <div class="b2-crumbs">
+      <a onclick="backToDashboard()">Productions</a><span class="sep">/</span>
+      <b id="b2CrumbTitle">Untitled production</b><span class="sep">/</span>
+      <span>Cue Sheet Builder</span>
+    </div>
+    <div class="b2-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
+      <input id="epSearchInput" placeholder="Search episodes…" oninput="filterEpisodeSidebar()">
+    </div>
+    <div class="b2-navright">
+      <div class="b2-autosave" id="b2Autosave"><span class="dot"></span><span id="b2AutosaveText">All changes saved</span></div>
+      <button class="b2-btn b2-btn-ghost" onclick="fileInput('workfile')" title="Import a full production workfile (.xlsx)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Import Workfile
+      </button>
+      <button class="b2-btn b2-btn-ghost" onclick="fileInput('iprsImport')" title="Import IPRS rates/codes (.xlsx)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Import IPRS
+      </button>
+      <button class="b2-btn b2-btn-ghost" onclick="previewCueSheet()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+        Preview Cue Sheet
+      </button>
+      <button class="b2-btn b2-btn-ghost" id="navExportBtn" onclick="document.getElementById('exportSection').scrollIntoView({behavior:'smooth',block:'start'})">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke-linecap="round"/></svg>
+        Export
+      </button>
+      <button class="b2-btn b2-btn-primary" onclick="saveChangesNow()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Save Changes
+      </button>
+      <div class="b2-avatar" id="b2Avatar" title="" onclick="backToDashboard()">A</div>
+    </div>
+  </div>
+</div>
+
+<main>
+
+  <!-- PRODUCTION SUMMARY (read-only; full details live on a separate screen, opened via modal) -->
+  <div class="prod-summary-card" id="prodSummaryCard">
+    <div class="prod-poster-mini" id="prodPosterMini">—</div>
+    <div class="prod-id-mini">
+      <div class="eyebrow">Production</div>
+      <h2 id="prodSummaryTitle">Untitled production</h2>
+      <div class="tags" id="prodSummaryTags"></div>
+    </div>
+    <div class="prod-divider"></div>
+    <div class="prod-meta-mini" id="prodSummaryMeta"></div>
+    <button class="b2-btn b2-btn-ghost" onclick="openProdDetailsModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12s3.5-7 9-7 9 7 9 7-3.5 7-9 7-9-7-9-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      View Production Details
+    </button>
+  </div>
+
+  <!-- EPISODES / TRACKS / CONTRIBUTORS — three-column workspace -->
+  <div class="workspace">
+
+    <!-- LEFT: Episode list -->
+    <aside class="panel2 ep-sidebar">
+      <div class="ep-search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
+        <input placeholder="Search episodes…" oninput="filterEpisodeSidebar()" id="epSearchInputSide">
+      </div>
+      <div class="ep-add-row">
+        <button class="btn-add-episode" onclick="addEpisode()">+ Add Episode</button>
+        <button class="btn-import-episode" onclick="fileInput('episodeWorkfile')" title="Import Episode Excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg></button>
+      </div>
+      <div class="ep-count-row" id="epCountRow"></div>
+      <div class="ep-list-scroll" id="epSidebarList"></div>
+    </aside>
+
+    <!-- CENTER: Episode details + track table -->
+    <div class="ep-center">
+      <div class="panel2 ep-detail-card">
+        <div class="panel2-head">
+          <h3>Episode Details</h3>
+          <div class="ep-dl-actions" id="epDownloadActions"></div>
+        </div>
+        <div class="panel2-body">
+          <div class="ep-detail-fields" id="epDetailFields"></div>
+        </div>
+      </div>
+
+      <div class="panel2 track-table-panel">
+        <div class="panel2-head">
+          <h3>Tracks</h3>
+          <button class="btn-primary-sm" onclick="addTrackToSelected()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
+            Add Track
+          </button>
+        </div>
+        <div class="tbl-scroll">
+          <table class="tracks-tbl">
+            <thead>
+              <tr>
+                <th style="width:50px;">Track No</th>
+                <th>Track Name</th>
+                <th style="width:90px;">Duration</th>
+                <th>Singer</th>
+                <th style="width:100px;">Usage</th>
+                <th style="width:110px;">Status</th>
+                <th style="width:60px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="trackTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Drag handle to resize Track Details / Contributors panel (desktop only) -->
+    <div class="ep-resizer" id="epResizer" title="Drag to resize"></div>
+
+    <!-- RIGHT: Track details + contributors -->
+    <aside class="ep-right">
+      <div class="panel2">
+        <div class="panel2-head"><h3>Track Details</h3></div>
+        <div class="panel2-body">
+          <div class="track-detail-fields" id="trackDetailFields"></div>
+        </div>
+      </div>
+      <div class="panel2 contrib-card">
+        <div class="panel2-head">
+          <h3>Contributors</h3>
+          <span class="share-badge" id="totalShareBadge">Total Share = 0%</span>
+        </div>
+        <div class="contrib-tbl" id="contribTableHost"></div>
+        <button class="btn-add-contrib" id="addContribBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
+          Add Contributor
+        </button>
+        <div class="save-song-wrap" id="saveSongWrap"></div>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- Production Details modal (full editable form, unchanged fields, opened once per production) -->
+  <div class="modal-overlay" id="prodDetailsModal" style="display:none;">
+    <div class="modal-card prod-modal-card">
+      <div class="modal-card-head">
+        <h2>Production Details</h2>
+        <button class="icon-btn2" onclick="closeProdDetailsModal()" title="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="modal-card-body">
+        <div class="grid cols-3" id="prodForm"><!-- built by JS --></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview modal -->
+  <div class="modal-overlay" id="previewModal" style="display:none;">
+    <div class="modal-card preview-modal-card">
+      <div class="modal-card-head">
+        <h2>Cue Sheet Preview</h2>
+        <div style="display:flex; gap:8px;">
+          <button class="b2-btn b2-btn-ghost" onclick="window.print()">Print</button>
+          <button class="icon-btn2" onclick="closePreviewModal()" title="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+        </div>
+      </div>
+      <div class="preview-body" id="previewBody"></div>
+    </div>
+  </div>
+
+  <!-- EXPORT — Admin only. Hidden for Editors via applyRoleToBuilder(). -->
+  <section class="section" id="exportSection">
+    <header>
+      <div>
+        <h2>Export episodes</h2>
+      </div>
+    </header>
+    <div class="body">
+      <div class="export-range">
+        <div class="field">
+          <label class="lab">From episode</label>
+          <select id="exportFrom" onchange="onExportRangeChange('from')"></select>
+        </div>
+        <div class="field">
+          <label class="lab">To episode</label>
+          <select id="exportTo" onchange="onExportRangeChange('to')"></select>
+        </div>
+        <p class="examples">e.g. <b>Episode 1 → Episode 5</b>, <b>Episode 12 → Episode 18</b>, <b>Episode 7 only</b>, or <b>Episode 25 → Last Episode</b>. Only the selected range is included in the ZIP.</p>
+      </div>
+      <div class="export-grid">
+        <div class="exp iprs">
+          <button onclick="exportRange('IPRS')">Download IPRS</button>
+        </div>
+        <div class="exp prs">
+          <button onclick="exportRange('PRS')">Download PRS</button>
+        </div>
+        <div class="exp ascap">
+          <button onclick="exportRange('ASCAP')">Download ASCAP</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="foot">Your project is saved automatically to this device as you work.</div>
+</div><!-- /builderApp -->
+
+<input type="file" id="fileWorkfile" accept=".xlsx,.xls" onchange="onWorkfile(event)">
+<input type="file" id="fileEpisodeWorkfile" accept=".xlsx,.xls" onchange="onEpisodeWorkfile(event)">
+<input type="file" id="fileProject" accept=".json" onchange="onProject(event)">
+<input type="file" id="fileIprsImport" accept=".xlsx,.xls" onchange="onIprsImport(event)">
+<div class="toast" id="toast"></div>
+
+<script src="core.js"></script>
+<script src="app.js"></script>
+
+
+</body>
+</html>
